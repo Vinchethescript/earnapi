@@ -2,7 +2,7 @@ from urllib.parse import urljoin
 from datetime import datetime
 
 
-class Endpoint: # there are still a lot to be implemented
+class Endpoint:  # there are still a lot to be implemented
     BASE_URL = "https://earnapp.com/dashboard/api/"
 
     # users
@@ -61,7 +61,7 @@ class Model:
 
     def __getitem__(self, item):
         return self.___kwargs.get(item)
-    
+
     def __repr__(self):
         return f"{self.__class__.__name__}({self.___kwargs})"
 

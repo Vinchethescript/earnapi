@@ -50,13 +50,12 @@ loop.run_until_complete(main())
 - The following exceptions are defined.
     Exception | Reason
     --- | ---
-    `AuthenticationError` | Raised on authentication failure.
-    `DeviceOperationError` | When the attempt to add device is failed.
-    `DeviceNotFoundError` | When the device to be added is **not found**.
-    `DeviceAlreadyAddedError` | When the device ID is already linked
-    `DeviceOperationError` | When cause of failure is not known.
-    `TooManyRequestsError` | Raised when earnapp rate limit is reached.
-    `IPCheckError` | Raised when there's an error checking if the IP address is valid.
-    `InvalidIPError` | Raised when the IP address is invalid.
-    `RedeemError` | When unknown error occurs on redeption.
-    `MinimumRedeemBalanceError` | When account doesn't have minimum balance needed for redeeming.
+    `EarnAppError`: The exception all exceptions are based on.
+    `AuthenticationError`: Raised on authentication failure.
+    `DeviceOperationError`: Raised when any operation with a device fails.
+    `DeviceNotFoundError`: Raised when a device to add wasn't found.
+    `DeviceAlreadyAddedError`: Raised when a device is already added.
+    `TooManyRequestsError`: Raised when you reach EarnApp's rate limit.
+    `IPCheckError`: Raised when there's an error checking for the IP.
+    `InvalidIPError`: Raised when the IP address isn't valid.
+    `RedeemError`: Raised when an error occurs trying to redeem.

@@ -36,7 +36,7 @@ async def main():
     for device in devices:
         print("\tDevice:", device.title)
         print("\tCountry:", device.country)
-        print("\tRate:",  device.rate)
+        print("\tRate:", device.rate)
         print("\tBandwidth:", device.bw, "bytes")
         print("\tTotal bandwidth:", device.total_bw, "bytes")
         print("\tEarned:", device.earned)
@@ -45,7 +45,12 @@ async def main():
         status = device_statuses[device.uuid]
         print("\tStatus:", "online" if status["online"] else "offline", end=" ")
         if status["online"]:
-            print("since", status["online_since"], "for", datetime.fromtimestamp(status["uptime_today"]).time())
+            print(
+                "since",
+                status["online_since"],
+                "for",
+                datetime.fromtimestamp(status["uptime_today"]).time(),
+            )
         else:
             print()
 
@@ -55,7 +60,7 @@ async def main():
     # Get your transactions
     transactions = await client.get_transactions()
     print("Transactions:")
-    for trans in transactions: # hi
+    for trans in transactions:  # hi
         print("\tDate:", trans.date)
         print("\tAmount:", trans.money_amount)
         print("\tStatus:", trans.status)
@@ -82,9 +87,9 @@ async def main():
     print("Redeemed" if redeemed else "Could not redeem", "your balance to PayPal.")
 
     # Add a device (not tested)
-    #await client.add_device("sdk-xxxxx-xxxxxxxxxxxx")
+    # await client.add_device("sdk-xxxxx-xxxxxxxxxxxx")
     # Delete a device (not tested)
-    #await client.delete_device("sdk-xxxxx-xxxxxxxxxxxx")
+    # await client.delete_device("sdk-xxxxx-xxxxxxxxxxxx")
 
 
 asyncio.get_event_loop().run_until_complete(main())

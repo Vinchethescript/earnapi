@@ -6,7 +6,10 @@ from .models import *
 from urllib.parse import urljoin
 from aiohttp import ClientResponseError, ClientSession
 
-ip_regex = re.compile("^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$")
+ip_regex = re.compile(
+    "^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$"
+)
+
 
 def is_a_valid_ip(ipaddress: str):
     return bool(ip_regex.search(ipaddress))

@@ -14,6 +14,10 @@ class DeviceOperationError(EarnAppError):
     pass
 
 
+class TooManyRequestsError(EarnAppError):
+    pass
+
+
 class AuthenticationError(EarnAppError):
     def __init__(self) -> None:
         message = "An improper oauth-refresh-token has been used."
@@ -25,12 +29,4 @@ class DeviceNotFoundError(DeviceOperationError):
 
 
 class DeviceAlreadyAddedError(DeviceOperationError):
-    pass
-
-
-class DeviceOperationError(DeviceOperationError):
-    pass
-
-
-class TooManyRequestsError(DeviceOperationError):
     pass
