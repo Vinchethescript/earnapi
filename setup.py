@@ -1,20 +1,19 @@
-from setuptools import setup, find_packages
-import os
-from earnapi import __version__
+import setuptools
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = "\n" + fh.read()
 
 # Setting up
-setup(
+setuptools.setup(
     name="earnapi",
-    version=__version__,
+    version="1.0.5",
     author="Vinche.zsh",
     author_email="vincysuper07@gmail.com",
     description="Asynchronous EarnApp API wrapper written in Python.",
     long_description_content_type="text/markdown",
     long_description=long_description,
-    packages=find_packages(),
+    packages=["earnapi"],
+    python_requires=">=3.7",
     install_requires=["aiohttp"],
     url="https://github.com/Vincydotzsh/earnapi",
     project_urls={
