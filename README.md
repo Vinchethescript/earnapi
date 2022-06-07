@@ -26,9 +26,9 @@ async def main():
     # Get your transactions
     transactions = await client.get_transactions()
     print("Transactions:", transactions)
-    # Get referreals
-    referreals = await client.get_referreals()
-    print("Referreals:", referreals)
+    # Get referrals
+    referrals = await client.get_referrals()
+    print("Referrals:", referrals)
     # Device statuses
     device_statuses = await client.get_device_statuses()
     print("Device statuses:", device_statuses)

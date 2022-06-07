@@ -82,7 +82,7 @@ class BanDetails(Model):
     pass
 
 
-class Referreal(Model):
+class Referral(Model):
     pass
 
 

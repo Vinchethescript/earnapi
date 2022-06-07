@@ -110,9 +110,9 @@ class Client:
             "GET", Endpoint.TRANSACTIONS, Transaction, True, *args, **kwargs
         )
 
-    async def get_referreals(self, *args, **kwargs) -> typing.List[Referreal]:
+    async def get_referrals(self, *args, **kwargs) -> typing.List[Referral]:
         return await self.request(
-            "GET", Endpoint.REFEREES, Referreal, True, *args, **kwargs
+            "GET", Endpoint.REFEREES, Referral, True, *args, **kwargs
         )
 
     async def add_device(self, new_device_id, *args, **kwargs):
