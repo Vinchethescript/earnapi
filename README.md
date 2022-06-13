@@ -48,14 +48,14 @@ loop.run_until_complete(main())
 
 ## Exceptions
 - The following exceptions are defined.
-    Exception | Reason
-    --- | ---
-    `EarnAppError`: The exception all exceptions are based on.
-    `AuthenticationError`: Raised on authentication failure.
-    `DeviceOperationError`: Raised when any operation with a device fails.
-    `DeviceNotFoundError`: Raised when a device to add wasn't found.
-    `DeviceAlreadyAddedError`: Raised when a device is already added.
-    `TooManyRequestsError`: Raised when you reach EarnApp's rate limit.
-    `IPCheckError`: Raised when there's an error checking for the IP.
-    `InvalidIPError`: Raised when the IP address isn't valid.
-    `RedeemError`: Raised when an error occurs trying to redeem.
+    Exception                 | Reason
+    ---                       | ---
+    `EarnAppError`            | The exception all exceptions are based on.
+    `AuthenticationError`     | Raised on authentication failure.
+    `DeviceOperationError`    | Raised when any operation with a device fails.
+    `DeviceNotFoundError`     | Raised when a device to add wasn't found.
+    `DeviceAlreadyAddedError` | Raised when a device is already added.
+    `TooManyRequestsError`    | Raised when you reach EarnApp's rate limit.
+    `IPCheckError`            | Raised when there's an error checking for the IP.
+    `InvalidIPError`          | Raised when the IP address isn't valid.
+    `RedeemError`             | Raised when an error occurs trying to redeem.
