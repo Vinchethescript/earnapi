@@ -1,6 +1,6 @@
 # EarnAPI
 
-Asynchronous EarnApp API wrapper written in Python based on [pyEarnapp](https://github.com/fazalfarhan01/EarnApp-API.git) (synchronous).
+Asynchronous EarnApp API wrapper written in Python inspired from [pyEarnapp](https://github.com/fazalfarhan01/EarnApp-API.git) (synchronous).
 
 ## Installation
 ```bash
