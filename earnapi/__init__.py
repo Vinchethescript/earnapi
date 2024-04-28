@@ -2,7 +2,7 @@ from .client import Client
 from .models import *
 from .errors import *
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 __author__ = "Vinche.zsh"
 __license__ = "GPL-3.0"
 __title__ = "earnapi"
