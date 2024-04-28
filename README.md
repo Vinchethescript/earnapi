@@ -1,6 +1,13 @@
 # EarnAPI
 
-Asynchronous EarnApp API wrapper written in Python inspired from [pyEarnapp](https://github.com/fazalfarhan01/EarnApp-API.git) (synchronous).
+EarnApp API wrapper written in Python using asyncio, inspired
+from [pyEarnapp](https://github.com/fazalfarhan01/EarnApp-API.git) (which does not use asyncio).
+
+## Be careful how you use this library!
+This library is not officially supported by EarnApp. Use it at your own risk.
+I am not responsible for any damage caused by using this library.\
+Also, please do not spam the API with requests.
+It is not nice and can get you banned or rate limited, and EarnApp rate limits last a lot.
 
 ## Installation
 ```bash
@@ -45,17 +52,3 @@ async def main():
 
 loop.run_until_complete(main())
 ```
-
-## Exceptions
-- The following exceptions are defined.
-    Exception                 | Reason
-    ---                       | ---
-    `EarnAppError`            | The exception all exceptions are based on.
-    `AuthenticationError`     | Raised on authentication failure.
-    `DeviceOperationError`    | Raised when any operation with a device fails.
-    `DeviceNotFoundError`     | Raised when a device to add wasn't found.
-    `DeviceAlreadyAddedError` | Raised when a device is already added.
-    `TooManyRequestsError`    | Raised when you reach EarnApp's rate limit.
-    `IPCheckError`            | Raised when there's an error checking for the IP.
-    `InvalidIPError`          | Raised when the IP address isn't valid.
-    `RedeemError`             | Raised when an error occurs trying to redeem.

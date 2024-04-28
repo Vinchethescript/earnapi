@@ -1,11 +1,12 @@
 import dotenv
 import os
 import asyncio
+import aiohttp
 from datetime import datetime
 from earnapi.client import Client
 
 dotenv.load_dotenv()
-
+loop = asyncio.get_event_loop()
 client = Client(os.getenv("EAUTH"))
 
 
@@ -31,7 +32,7 @@ async def main():
     print()
     # Get a list of devices and their status
     devices = await client.get_devices()
-    device_statuses = await client.get_device_statuses()
+    statuses = await client.get_online_devices()
     print("Devices:")
     for device in devices:
         print("\tDevice:", device.title)
@@ -42,14 +43,18 @@ async def main():
         print("\tEarned:", device.earned)
         print("\tTotal earned:", device.earned_total)
         print("\tUUID:", device.uuid)
-        status = device_statuses[device.uuid]
-        print("\tStatus:", "online" if status["online"] else "offline", end=" ")
-        if status["online"]:
+        # We could also use device.get_status() to get the status of the device,
+        # which would return None if it was offline, but that would require
+        # one more request per device, which is not what we want here, to avoid
+        # rate limits.
+        status = list(filter(lambda x: x.uuid == device.uuid, statuses))
+        print("\tStatus:", "online" if status else "offline", end=" ")
+        if status:
             print(
                 "since",
-                status["online_since"],
+                status[0].since,
                 "for",
-                datetime.fromtimestamp(status["uptime_today"]).time(),
+                datetime.fromtimestamp(status[0].uptime_today).time(),
             )
         else:
             print()
@@ -60,15 +65,16 @@ async def main():
     # Get your transactions
     transactions = await client.get_transactions()
     print("Transactions:")
-    for trans in transactions:  # hi
-        print("\tDate:", trans.date)
-        print("\tAmount:", trans.money_amount)
-        print("\tStatus:", trans.status)
+    for transaction in transactions:
+        print("\tDate:", transaction.date)
+        print("\tAmount:", transaction.money_amount)
+        print("\tStatus:", transaction.status)
         print()
 
     print()
     # Get referrals
     referrals = await client.get_referrals()
+    print(referrals)
     print("Referrals:")
     for refer in referrals:
         print("\tID:", refer.id)
@@ -79,12 +85,31 @@ async def main():
 
     print()
     # IP check
-    ip_allowed = await client.is_ip_allowed("127.0.0.1")
-    print("IP", "is" if ip_allowed else "is not", "allowed to use EarnApp")
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://ifconfig.me/ip") as resp:
+            ip_allowed = await client.check_ip(await resp.text())
+            print("This IP", "is" if ip_allowed else "is not", "allowed to use EarnApp")
 
     # Redeem to PayPal, may raise an exception
-    redeemed = await client.redeem_to_paypal("your_paypal@email_he.re")
-    print("Redeemed" if redeemed else "Could not redeem", "your balance to PayPal.")
+    ch = await loop.run_in_executor(
+        None, input, "Do you want to try to redeem your balance to PayPal? [y/N] "
+    )
+    if ch.lower() == "y":
+        match = False
+        while not match:
+            email = await loop.run_in_executor(None, input, "Enter your PayPal email: ")
+            confirm = await loop.run_in_executor(
+                None,
+                input,
+                "Re-enter your PayPal email, just to be sure you're not going to lose your money: ",
+            )
+            if email != confirm:
+                print("Emails do not match.")
+            else:
+                match = True
+
+        redeemed = await client.redeem_to_paypal(email)
+        print("Redeemed" if redeemed else "Could not redeem", "your balance to PayPal.")
 
     # Add a device (not tested)
     # await client.add_device("sdk-xxxxx-xxxxxxxxxxxx")
@@ -92,4 +117,4 @@ async def main():
     # await client.delete_device("sdk-xxxxx-xxxxxxxxxxxx")
 
 
-asyncio.get_event_loop().run_until_complete(main())
+loop.run_until_complete(main())

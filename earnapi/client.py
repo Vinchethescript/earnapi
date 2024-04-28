@@ -7,17 +7,17 @@ from urllib.parse import urljoin
 from aiohttp import ClientResponseError, ClientSession
 
 ip_regex = re.compile(
-    "^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$"
+    r"^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$"
 )
 
 
-def is_a_valid_ip(ipaddress: str):
+def is_ip_valid(ipaddress: str):
     return bool(ip_regex.search(ipaddress))
 
 
 class Client:
     def __init__(self, auth_refresh_token) -> None:
-        self.params = {"appid": "earnapp_dashboard"}
+        self.params = {"appid": "earnapp"}
         self.headers = {}
         self.cookies = {
             "auth": "1",
@@ -29,7 +29,7 @@ class Client:
         self,
         method: str,
         endpoint: str,
-        cls: Model = None,
+        cls: typing.Optional[Model] = None,
         listify=False,
         return_response=False,
         *args,
@@ -43,11 +43,13 @@ class Client:
             self.cookies["xsrf-token"] = self.headers["xsrf-token"] = ""
             await self._rotate_xsrf()
 
+        headers = self.headers.copy()
+        headers["If-None-Match"] = 'W/"12a-zq7F7whpD0+Cs/eDHKaVIJj+87U"'
         async with ClientSession() as session:
             async with session.request(
                 method,
                 endpoint,
-                headers=self.headers,
+                headers=headers,
                 params=self.params,
                 cookies=self.cookies,
                 *args,
@@ -72,7 +74,8 @@ class Client:
                     else:
                         raise e
 
-                if not return_response:
+                if cls and not return_response:
+                    clss = cls
                     cls = cls.create_list if listify else cls
                     try:
                         ret = json.loads(response_content)
@@ -82,7 +85,12 @@ class Client:
                     except json.JSONDecodeError:
                         ret = response_content
 
-                    ret = cls(ret)
+                    if issubclass(clss, Interactable):
+                        ret = cls(self, ret)
+                    else:
+                        ret = cls(ret)
+                elif not cls and not return_response:
+                    ret = response_content
 
         return ret
 
@@ -98,9 +106,9 @@ class Client:
             "GET", Endpoint.USER_DATA, User, False, *args, **kwargs
         )
 
-    async def get_earnings(self, *args, **kwargs) -> Earning:
+    async def get_earnings(self, *args, **kwargs) -> EarningsData:
         return await self.request(
-            "GET", Endpoint.MONEY, Earning, False * args, **kwargs
+            "GET", Endpoint.MONEY, EarningsData, False * args, **kwargs
         )
 
     async def get_devices(self, *args, **kwargs) -> typing.List[Device]:
@@ -108,15 +116,32 @@ class Client:
             "GET", Endpoint.DEVICES, Device, True, *args, **kwargs
         )
 
+    async def get_device(self, uuid: str) -> Device:
+        devs = await self.get_devices()
+        dev = list(filter(lambda x: x.uuid == uuid, devs))
+        if not dev:
+            return
+
+        return dev[0]
+
     async def get_transactions(self, *args, **kwargs) -> typing.List[Transaction]:
         return await self.request(
             "GET", Endpoint.TRANSACTIONS, Transaction, True, *args, **kwargs
         )
 
-    async def get_referrals(self, *args, **kwargs) -> typing.List[Referral]:
-        return await self.request(
-            "GET", Endpoint.REFEREES, Referral, True, *args, **kwargs
+    async def get_referrals(self) -> typing.List[Referral]:
+        first = json.loads(
+            await self.request("GET", Endpoint.REFEREES, json={"page": 0})
         )
+
+        ret = first["list"]
+
+        for i in range(1, first["pagination"]["max"] + 1):
+            ret += json.loads(
+                await self.request("GET", Endpoint.REFEREES, json={"page": i})
+            )["list"]
+
+        return Referral.create_list(ret)
 
     async def add_device(self, new_device_id, *args, **kwargs):
         data = {"uuid": new_device_id}
@@ -169,9 +194,9 @@ class Client:
             else:
                 return True if content.get("status", None) == "ok" else False
 
-    async def is_ip_allowed(self, ip_address: str, *args, **kwargs) -> bool:
-        if not is_a_valid_ip(ip_address):
-            raise IPCheckError("The IP address is not valid.")
+    async def check_ip(self, ip_address: str, *args, **kwargs) -> bool:
+        if not is_ip_valid(ip_address):
+            raise IPCheckError("Invalid IP Address provided.")
         try:
             content = await self.request(
                 "GET",
@@ -213,12 +238,17 @@ class Client:
             else:
                 return content
 
-    async def get_device_statuses(self) -> dict:
-        devices = await self.get_devices()
+    async def get_online_devices(
+        self, *uuids: typing.Union[Device, str]
+    ) -> list[OnlineDeviceStatus]:
         devices_req = []
 
-        for device in devices:
-            devices_req.append({"uuid": device.uuid, "appid": "node_earnapp.com"})
+        for device in uuids:
+            devices_req.append({"uuid": getattr(device, "uuid", device)})
+
+        kwargs = {}
+        if devices_req:
+            kwargs["json"] = {"devices": devices_req}
 
         try:
             content = await self.request(
@@ -226,7 +256,7 @@ class Client:
                 Endpoint.DEVICE_STATUSES,
                 dict,
                 False,
-                json={"list": devices_req},
+                **kwargs,
             )
         except ClientResponseError as e:
             if e.status == 429:
@@ -238,4 +268,14 @@ class Client:
             if error_message:
                 raise Exception(error_message)
             else:
-                return content["statuses"]
+                ret = []
+                for k, v in content.items():
+                    ret.append(
+                        OnlineDeviceStatus(
+                            uuid=k,
+                            since=datetime.fromtimestamp(v[0] / 1000),
+                            uptime_today=v[1] / 1000,
+                        )
+                    )
+
+                return ret
