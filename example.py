@@ -28,6 +28,14 @@ async def main():
     print("Multiplier:", earnings.multiplier)
     print("Current balance:", earnings.balance)
     print("Lifetime earnings:", earnings.earnings_total)
+    print(earnings.redeem_details)
+    if earnings.redeem_details:
+        print("Redeem data:")
+        print("\tPayment method:", earnings.redeem_details.payment_method)
+        print("\tMinimum balance:", earnings.redeem_details.min_redeem)
+        print("\tPayPal email:", earnings.redeem_details.email)
+        print("\tEmail hash:", earnings.redeem_details.email_hash)
+        print()
 
     print()
     # Get a list of devices and their status

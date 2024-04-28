@@ -1,6 +1,7 @@
 from urllib.parse import urljoin
 from datetime import datetime
 from dataclasses import dataclass
+from typing import Optional
 
 
 class Endpoint:  # there are still a lot to be implemented
@@ -49,25 +50,30 @@ class Endpoint:  # there are still a lot to be implemented
 
 class Model:
     def __init__(self, kwargs) -> None:
-        self.___kwargs = kwargs
+        self._kwargs = kwargs
         for k, v in kwargs.items():
             if callable(getattr(self, f"_transform_{k}", None)):
-                kwargs[k] = getattr(self, f"_transform_{k}")(v)
+                self._kwargs[k] = getattr(self, f"_transform_{k}")(v)
+
 
     def __dir__(self):
         ret = dir(super())
-        ret += self.___kwargs.keys()
+        ret += self._kwargs.keys()
         return ret
 
-    def __getattr__(self, item):
-        return self.___kwargs.get(item, None)
+    def __getattribute__(self, item):
+        get = super().__getattribute__
+        if item.startswith("_"):
+            return get(item)
+        
+        return self._kwargs.get(item, None)
 
     def __getitem__(self, item):
-        return self.___kwargs.get(item)
+        return self._kwargs.get(item)
 
     def __repr__(self):
         args = []
-        for key, value in self.___kwargs.items():
+        for key, value in self._kwargs.items():
             args.append(f"{key}={value!r}")
         return f"{self.__class__.__name__} <{' '.join(args)}>"
 
@@ -110,10 +116,11 @@ class EarningsData(Model):
     ref_hola_browser: float
     ref_hola_browser_total: float
     referral_part: int
-    redeem_details: RedeemDetails
+    redeem_details: Optional[RedeemDetails] = None
 
-    def _transform_redeem_details(self, value: dict):
-        return RedeemDetails(value)
+    def _transform_redeem_details(self, value: Optional[dict]):
+        if value:
+            return RedeemDetails(value)
 
     def _transform_referral_part(self, value: str):
         return float(value.rstrip("%")) / 100
