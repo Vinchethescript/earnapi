@@ -1,24 +1,33 @@
-import setuptools
+from setuptools import setup, find_packages
+import os
+import re
+
+packages = find_packages()
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = "\n" + fh.read()
 
+with open(
+    os.path.join(os.path.dirname(__file__), packages[0], "__init__.py"),
+    "r",
+    encoding="utf-8",
+) as f:
+    kwargs = {
+        var.strip("_"): val
+        for var, val in re.findall(
+            r'^(__\w+__)\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE
+        )
+    }
+    kwargs["author_email"] = kwargs.pop("email", "")
+
 # Setting up
-setuptools.setup(
+setup(
     name="earnapi",
-    version="1.0.5",
-    author="Vinche.zsh",
-    author_email="vincysuper07@gmail.com",
-    description="Asynchronous EarnApp API wrapper written in Python.",
     long_description_content_type="text/markdown",
     long_description=long_description,
-    packages=["earnapi"],
+    packages=packages,
     python_requires=">=3.7",
     install_requires=["aiohttp"],
-    url="https://github.com/Vincydotzsh/earnapi",
-    project_urls={
-        "Bug Tracker": "https://github.com/Vincydotzsh/earnapi/issues",
-    },
     keywords=[
         "python",
         "earnapi",
@@ -32,9 +41,5 @@ setuptools.setup(
         "requests",
         "python earnapp",
     ],
-    classifiers=[
-        "Intended Audience :: Developers",
-        "Programming Language :: Python :: 3",
-        "Operating System :: OS Independent",
-    ],
+    **kwargs
 )
