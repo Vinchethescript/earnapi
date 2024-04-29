@@ -28,7 +28,6 @@ async def main():
     print("Multiplier:", earnings.multiplier)
     print("Current balance:", earnings.balance)
     print("Lifetime earnings:", earnings.earnings_total)
-    print(earnings.redeem_details)
     if earnings.redeem_details:
         print("Redeem data:")
         print("\tPayment method:", earnings.redeem_details.payment_method)
@@ -116,8 +115,12 @@ async def main():
             else:
                 match = True
 
-        redeemed = await client.redeem_to_paypal(email)
-        print("Redeemed" if redeemed else "Could not redeem", "your balance to PayPal.")
+        try:
+           redeemed = await client.redeem_to_paypal(email)
+        except Exception as e:
+            print("Could not redeem your balance to PayPal:", e)
+        else:
+            print("Redeemed" if redeemed else "Could not redeem", "your balance to PayPal.")
 
     # Add a device (not tested)
     # await client.add_device("sdk-xxxxx-xxxxxxxxxxxx")

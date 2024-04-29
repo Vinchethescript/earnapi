@@ -1,7 +1,7 @@
 from urllib.parse import urljoin
 from datetime import datetime
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 
 
 class Endpoint:  # there are still a lot to be implemented
@@ -52,24 +52,20 @@ class Model:
     def __init__(self, kwargs) -> None:
         self._kwargs = kwargs
         for k, v in kwargs.items():
-            if callable(getattr(self, f"_transform_{k}", None)):
+            if hasattr(self, f"_transform_{k}") and callable(getattr(self, f"_transform_{k}")):
                 self._kwargs[k] = getattr(self, f"_transform_{k}")(v)
 
 
     def __dir__(self):
-        ret = dir(super())
+        ret = super().__dir__()
         ret += self._kwargs.keys()
         return ret
 
-    def __getattribute__(self, item):
-        get = super().__getattribute__
-        if item.startswith("_"):
-            return get(item)
-        
-        return self._kwargs.get(item, None)
+    def __getattr__(self, name: str) -> Any:
+        return self._kwargs.get(name)
 
     def __getitem__(self, item):
-        return self._kwargs.get(item)
+        return self._kwargs[item]
 
     def __repr__(self):
         args = []
@@ -116,7 +112,7 @@ class EarningsData(Model):
     ref_hola_browser: float
     ref_hola_browser_total: float
     referral_part: int
-    redeem_details: Optional[RedeemDetails] = None
+    redeem_details: Optional[RedeemDetails]
 
     def _transform_redeem_details(self, value: Optional[dict]):
         if value:
