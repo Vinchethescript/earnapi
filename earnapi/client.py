@@ -5,6 +5,7 @@ from .errors import *
 from .models import *
 from urllib.parse import urljoin
 from aiohttp import ClientResponseError, ClientSession
+from datetime import datetime
 
 ip_regex = re.compile(
     r"^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$"
@@ -37,8 +38,8 @@ class Client:
     ) -> typing.Any:
         ret = None
         if (
-            self.cookies.get("xsrf-token") == None
-            or self.headers.get("xsrf-token") == None
+            self.cookies.get("xsrf-token") is None
+            or self.headers.get("xsrf-token") is None
         ):
             self.cookies["xsrf-token"] = self.headers["xsrf-token"] = ""
             await self._rotate_xsrf()
@@ -57,7 +58,6 @@ class Client:
             ) as response:
                 if return_response:
                     ret = response
-
                 else:
                     response_content = (await response.content.read()).decode()
 
@@ -81,7 +81,6 @@ class Client:
                         ret = json.loads(response_content)
                         if listify and "list" in ret and isinstance(ret["list"], list):
                             ret = ret["list"]
-
                     except json.JSONDecodeError:
                         ret = response_content
 
@@ -108,7 +107,7 @@ class Client:
 
     async def get_earnings(self, *args, **kwargs) -> EarningsData:
         return await self.request(
-            "GET", Endpoint.MONEY, EarningsData, False * args, **kwargs
+            "GET", Endpoint.MONEY, EarningsData, False, *args, **kwargs
         )
 
     async def get_devices(self, *args, **kwargs) -> typing.List[Device]:
@@ -120,8 +119,7 @@ class Client:
         devs = await self.get_devices()
         dev = list(filter(lambda x: x.uuid == uuid, devs))
         if not dev:
-            return
-
+            return None
         return dev[0]
 
     async def get_transactions(self, *args, **kwargs) -> typing.List[Transaction]:
@@ -133,7 +131,6 @@ class Client:
         first = json.loads(
             await self.request("GET", Endpoint.REFEREES, json={"page": 0})
         )
-
         ret = first["list"]
 
         for i in range(1, first["pagination"]["max"] + 1):
@@ -192,7 +189,7 @@ class Client:
             if error_message:
                 raise DeviceOperationError(error_message)
             else:
-                return True if content.get("status", None) == "ok" else False
+                return content.get("status", None) == "ok"
 
     async def check_ip(self, ip_address: str, *args, **kwargs) -> bool:
         if not is_ip_valid(ip_address):
@@ -241,10 +238,7 @@ class Client:
     async def get_online_devices(
         self, *uuids: typing.Union[Device, str]
     ) -> list[OnlineDeviceStatus]:
-        devices_req = []
-
-        for device in uuids:
-            devices_req.append({"uuid": getattr(device, "uuid", device)})
+        devices_req = [{"uuid": getattr(device, "uuid", device)} for device in uuids]
 
         kwargs = {}
         if devices_req:
@@ -277,5 +271,46 @@ class Client:
                             uptime_today=v[1] / 1000,
                         )
                     )
-
                 return ret
+
+    async def toggle_auto_payout(self, enable: bool, paypal_email: str = None, *args, **kwargs) -> bool:
+        """
+        Active ou désactive l'auto payout.
+
+        :param enable: True pour activer, False pour désactiver
+        :param paypal_email: adresse email PayPal (obligatoire si enable=True)
+        :return: True si succès, False sinon
+        """
+        if enable:
+            if not paypal_email:
+                raise ValueError("Un email PayPal est requis pour activer l'auto payout.")
+
+            data = {"to": paypal_email, "payment_method": "paypal.com"}
+            method = "POST"
+            extra_kwargs = {"data": data}
+        else:
+            method = "DELETE"
+            extra_kwargs = {}
+
+        try:
+            content = await self.request(
+                method,
+                Endpoint.REDEEM_DETAILS,
+                dict,
+                False,
+                *args,
+                **kwargs,
+                **extra_kwargs,
+            )
+        except ClientResponseError as e:
+            if e.status == 429:
+                raise TooManyRequestsError(e.content) from None
+            else:
+                action = "enable" if enable else "disable"
+                raise RedeemError(f"Failed to {action} auto payout: {e.content}") from None
+        else:
+            error_message = content.get("error", None)
+            if error_message:
+                raise RedeemError(error_message)
+            else:
+                return content.get("status") == "ok"
