@@ -273,17 +273,17 @@ class Client:
                     )
                 return ret
 
-    async def toggle_auto_payout(self, enable: bool, paypal_email: str = None, *args, **kwargs) -> bool:
+    async def toggle_auto_redeem(self, enable: bool, paypal_email: str = None, *args, **kwargs) -> bool:
         """
-        Active ou désactive l'auto payout.
+        Toggle auto redeem.
 
-        :param enable: True pour activer, False pour désactiver
-        :param paypal_email: adresse email PayPal (obligatoire si enable=True)
-        :return: True si succès, False sinon
+        :param enable: True to enable, False to disable
+        :param paypal_email: PayPal email address (required if enable=True)
+        :return: True on success, False otherwise
         """
         if enable:
             if not paypal_email:
-                raise ValueError("Un email PayPal est requis pour activer l'auto payout.")
+                raise ValueError("A PayPal email is needed to enable auto redeem.")
 
             data = {"to": paypal_email, "payment_method": "paypal.com"}
             method = "POST"
